@@ -14,6 +14,7 @@ from src.train import (
     compare_scaling_effect,
 )
 from src.evaluate import evaluate_model, evaluate_with_probabilities, interpret_errors
+from src.persist import save_model
 from src.visualize import (
     plot_class_distribution,
     plot_feature_correlation,
@@ -54,7 +55,26 @@ def main():
     roc_data = evaluate_with_probabilities(best_model, X_test_scaled, y_test)
     interpret_errors(metrics, target_names)
 
-    # 7. Figures
+    # 7. Persist the tuned model so the Streamlit app can serve it
+    save_model(
+        best_model,
+        scaler,
+        feature_names,
+        target_names,
+        metadata={
+            "best_params": grid.best_params_,
+            "cv_accuracy": grid.best_score_,
+            "test_accuracy": metrics["accuracy"],
+            "test_precision": metrics["precision"],
+            "test_recall": metrics["recall"],
+            "test_f1": metrics["f1"],
+            "roc_auc": roc_data["auc"],
+            "n_train": len(y_train),
+            "n_test": len(y_test),
+        },
+    )
+
+    # 8. Figures
     print("=" * 60)
     print("GENERATING FIGURES")
     print("=" * 60)
@@ -73,6 +93,7 @@ def main():
     print("=" * 60)
     print(f"Final test accuracy : {metrics['accuracy']:.4f}")
     print(f"Best parameters     : {grid.best_params_}")
+    print("Model written to    : models/svm_model.joblib")
     print("Figures written to  : results/figures/")
 
 
